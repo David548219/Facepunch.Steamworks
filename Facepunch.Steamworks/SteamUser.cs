@@ -258,6 +258,32 @@ namespace Steamworks
 		}
 
 		/// <summary>
+		/// Custom array segment version
+		/// </summary>
+		public static unsafe int DecompressVoice( ArraySegment<byte> from, System.IO.Stream output )
+		{
+			var to = Helpers.TakeBuffer( 1024 * 64 );
+
+			uint szWritten = 0;
+			
+			fixed ( byte* frm = from.Array)
+			fixed ( byte* dst = to )
+			{
+				if ( Internal.DecompressVoice( (IntPtr)frm + from.Offset, (uint)from.Count, (IntPtr)dst, (uint)to.Length, ref szWritten, SampleRate ) != VoiceResult.OK )
+					return 0;
+			}
+
+			if ( szWritten == 0 )
+				return 0;
+
+			//
+			// Copy to output buffer
+			//
+			output.Write( to, 0, (int)szWritten );
+			return (int)szWritten;
+		}
+
+		/// <summary>
 		/// Lazy version
 		/// </summary>
 		public static unsafe int DecompressVoice( byte[] from, System.IO.Stream output )
